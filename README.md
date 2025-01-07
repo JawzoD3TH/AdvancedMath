@@ -1,4 +1,4 @@
-# AdvancedMath
+# Advanced Math
 
 AdvancedMath is a .NET library that provides advanced mathematical functions and utilities. It supports both synchronous and asynchronous methods for various numerical operations.
 
