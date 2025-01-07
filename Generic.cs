@@ -173,14 +173,14 @@ public static class Generic
         };
     }
 
-    public static T ZScore<T>(in IEnumerable<T> listOfNumbers, in T zScore) where T : INumber<T>
+    public static T ZScore<T>(in IEnumerable<T> listOfNumbers, in T fallbackZScoreValue) where T : INumber<T>
     {
         switch (listOfNumbers)
         {
-            case decimal[] decimalListOfNumbers when zScore is decimal decimalZScore:
+            case decimal[] decimalListOfNumbers when fallbackZScoreValue is decimal decimalZScore:
                 return T.CreateChecked(AdvancedMath.ZScore(in decimalListOfNumbers, in decimalZScore));
 
-            case double[] doubleListOfNumbers when zScore is double doubleZScore:
+            case double[] doubleListOfNumbers when fallbackZScoreValue is double doubleZScore:
                 return T.CreateChecked(AdvancedMath.ZScore(in doubleListOfNumbers, in doubleZScore));
 
             default:
@@ -189,18 +189,18 @@ public static class Generic
                 for (var i = 0; i < count; i++)
                     newDoubleListOfNumbers[i] = double.CreateTruncating(listOfNumbers.AtIndex(i));
 
-                return T.CreateChecked(AdvancedMath.ZScore(in newDoubleListOfNumbers, double.CreateTruncating(zScore)));
+                return T.CreateChecked(AdvancedMath.ZScore(in newDoubleListOfNumbers, double.CreateTruncating(fallbackZScoreValue)));
         };
     }
 
-    public static async Task<T> ZScoreAsync<T>(IEnumerable<T> listOfNumbers, T zScore) where T : INumber<T>
+    public static async Task<T> ZScoreAsync<T>(IEnumerable<T> listOfNumbers, T fallbackZScoreValue) where T : INumber<T>
     {
         switch (listOfNumbers)
         {
-            case decimal[] decimalListOfNumbers when zScore is decimal decimalZScore:
+            case decimal[] decimalListOfNumbers when fallbackZScoreValue is decimal decimalZScore:
                 return T.CreateChecked(await AdvancedMath.ZScoreAsync(decimalListOfNumbers, decimalZScore).ConfigureAwait(false));
 
-            case double[] doubleListOfNumbers when zScore is double doubleZScore:
+            case double[] doubleListOfNumbers when fallbackZScoreValue is double doubleZScore:
                 return T.CreateChecked(AdvancedMath.ZScore(in doubleListOfNumbers, in doubleZScore));
 
             default:
@@ -215,7 +215,7 @@ public static class Generic
                     }
                 }).ConfigureAwait(false);
 
-                return T.CreateChecked(AdvancedMath.ZScore(in newDoubleListOfNumbers, double.CreateTruncating(zScore)));
+                return T.CreateChecked(AdvancedMath.ZScore(in newDoubleListOfNumbers, double.CreateTruncating(fallbackZScoreValue)));
         };
     }
 }

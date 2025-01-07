@@ -206,7 +206,7 @@ public static class AdvancedMath
         catch { return await SquareRootAsync(listOfNumbers.Sum(x => Power(x - mean, 2)) / (listOfNumbers.Length - 1)).ConfigureAwait(false); }
     }
 
-    public static decimal ZScore(in decimal[] listOfNumbers, in decimal zScore)
+    public static decimal ZScore(in decimal[] listOfNumbers, in decimal fallbackZScoreValue)
     {
         try
         {
@@ -229,10 +229,10 @@ public static class AdvancedMath
 
             return zScores.Average();
         }
-        catch { return zScore; }
+        catch { return fallbackZScoreValue; }
     }
 
-    public static double ZScore(in double[] listOfNumbers, in double zScore)
+    public static double ZScore(in double[] listOfNumbers, in double fallbackZScoreValue)
     {
         try
         {
@@ -255,10 +255,10 @@ public static class AdvancedMath
 
             return zScores.Average();
         }
-        catch { return zScore; }
+        catch { return fallbackZScoreValue; }
     }
 
-    public static async Task<decimal> ZScoreAsync(decimal[] listOfNumbers, decimal zScore)
+    public static async Task<decimal> ZScoreAsync(decimal[] listOfNumbers, decimal fallbackZScoreValue)
     {
         try
         {
@@ -286,6 +286,6 @@ public static class AdvancedMath
                 return await zScores.AverageAsync().ConfigureAwait(false);
             }).ConfigureAwait(false);
         }
-        catch { return zScore; }
+        catch { return fallbackZScoreValue; }
     }
 }
