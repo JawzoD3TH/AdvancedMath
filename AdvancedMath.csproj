@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <Title>Advanced Math</Title>
+    <Copyright>2024 © Jawid Hassim</Copyright>
+    <Description>AdvancedMath is a .NET library that provides advanced mathematical functions and utilities. It supports both synchronous and asynchronous methods for various numerical operations.
+
+Features:
+- Standard Deviation
+- Square Root
+- Power
+- Coefficient of Variation
+- Z-Score
+- Extension Methods for Numerical Operations
+
+Installation:
+To install AdvancedMath, add the project to your solution and reference it in your projects.</Description>
+    <PackageProjectUrl>https://github.com/JawzoD3TH/AdvancedMath</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/JawzoD3TH/AdvancedMath</RepositoryUrl>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+</Project>
