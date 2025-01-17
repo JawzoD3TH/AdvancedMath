@@ -173,6 +173,8 @@ public static class Generic
         };
     }
 
+    public static bool TryParseNumber<T>(in string value, out T? result) where T : INumber<T> => T.TryParse(value, System.Globalization.CultureInfo.InvariantCulture, out result);
+
     public static T ZScore<T>(in IEnumerable<T> listOfNumbers, in T fallbackZScoreValue) where T : INumber<T>
     {
         switch (listOfNumbers)
