@@ -18,7 +18,7 @@ public static class AdvancedMath
             return DoubleOne;
 
         var result = StandardDeviation(listOfNumbers) / listOfNumbers.Average();
-        return Generic.LessThanOrEqualToZero(in result) ? DoubleOne : result;
+        return Generic.LessThanOrEqualToZero(result) ? DoubleOne : result;
     }
 
     public static decimal CoefficientOfVariation(in decimal[] listOfNumbers)
@@ -27,7 +27,7 @@ public static class AdvancedMath
             return decimal.One;
 
         var result = StandardDeviation(listOfNumbers) / listOfNumbers.Average();
-        return Generic.LessThanOrEqualToZero(in result) ? decimal.One : result;
+        return Generic.LessThanOrEqualToZero(result) ? decimal.One : result;
     }
 
     public static async Task<decimal> CoefficientOfVariationAsync(decimal[] listOfNumbers)
@@ -36,7 +36,7 @@ public static class AdvancedMath
             return decimal.One;
 
         var result = await StandardDeviationAsync(listOfNumbers).ConfigureAwait(false) / await listOfNumbers.AverageAsync().ConfigureAwait(false);
-        return Generic.LessThanOrEqualToZero(in result) ? decimal.One : result;
+        return Generic.LessThanOrEqualToZero(result) ? decimal.One : result;
     }
 
     public static decimal Power(in decimal value, int power)
@@ -112,7 +112,7 @@ public static class AdvancedMath
 
     public static decimal SquareRoot(in decimal value, decimal accuracy = FastAccuracy)
     {
-        if (Generic.LessThanOrEqualToZero(in value))
+        if (Generic.LessThanOrEqualToZero(value))
             return decimal.Zero;
 
         if (accuracy < PrecisionAccuracy)
@@ -132,7 +132,7 @@ public static class AdvancedMath
 
     public static async Task<decimal> SquareRootAsync(decimal value, decimal accuracy = FastAccuracy)
     {
-        if (Generic.LessThanOrEqualToZero(in value))
+        if (Generic.LessThanOrEqualToZero(value))
             return decimal.Zero;
 
         if (accuracy < PrecisionAccuracy)

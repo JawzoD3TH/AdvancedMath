@@ -7,7 +7,7 @@ namespace AdvancedMath;
 
 public static class Generic
 {
-    public static T CoefficientOfVariation<T>(in IEnumerable<T> listOfNumbers) where T : INumber<T>
+    public static T CoefficientOfVariation<T>(IEnumerable<T> listOfNumbers) where T : INumber<T>
     {
         switch (listOfNumbers)
         {
@@ -27,7 +27,7 @@ public static class Generic
         };
     }
 
-    public static T CoefficientOfVariation<T>(in T mean, in T standardDeviation, T value) where T : INumber<T> =>
+    public static T CoefficientOfVariation<T>(T mean, T standardDeviation, T value) where T : INumber<T> =>
         standardDeviation == T.Zero ? T.Zero : (value - mean) / standardDeviation;
 
     public static async Task<T> CoefficientOfVariationAsync<T>(IEnumerable<T> listOfNumbers) where T : INumber<T>
@@ -56,7 +56,7 @@ public static class Generic
         };
     }
 
-    public static bool LessThanOrEqualToZero<T>(in T value) where T : INumber<T> => value <= T.Zero;
+    public static bool LessThanOrEqualToZero<T>(T value) where T : INumber<T> => value <= T.Zero;
 
     public static bool ManyLessThanOrEqualToZero<T>(params T[] values) where T : INumber<T>
     {
@@ -65,7 +65,7 @@ public static class Generic
 
         for (int i = 0; i < values.Length; i++)
         {
-            if (LessThanOrEqualToZero(in values[i]))
+            if (LessThanOrEqualToZero(values[i]))
                 return true;
         }
 
@@ -83,7 +83,7 @@ public static class Generic
         {
             for (int i = 0; i < values.Length; i++)
             {
-                if (LessThanOrEqualToZero(in values[i]))
+                if (LessThanOrEqualToZero(values[i]))
                 {
                     result = true;
                     break;
@@ -96,7 +96,7 @@ public static class Generic
         return result;
     }
 
-    public static T Power<T>(in T value, int power) where T : INumber<T> =>
+    public static T Power<T>(T value, int power) where T : INumber<T> =>
         value switch
         {
             decimal decimalValue => T.CreateChecked(AdvancedMath.Power(in decimalValue, power)),
@@ -112,7 +112,7 @@ public static class Generic
             _ => T.CreateChecked(Math.Pow(double.CreateTruncating(value), power))
         };
 
-    public static T SquareRoot<T>(in T value) where T : INumber<T> =>
+    public static T SquareRoot<T>(T value) where T : INumber<T> =>
         value switch
         {
             decimal decimalValue => T.CreateChecked(AdvancedMath.SquareRoot(in decimalValue)),
@@ -128,7 +128,7 @@ public static class Generic
             _ => T.CreateChecked(Math.Sqrt(double.CreateTruncating(value)))
         };
 
-    public static T StandardDeviation<T>(in IEnumerable<T> listOfNumbers) where T : INumber<T>
+    public static T StandardDeviation<T>(IEnumerable<T> listOfNumbers) where T : INumber<T>
     {
         switch (listOfNumbers)
         {
@@ -176,7 +176,7 @@ public static class Generic
     public static bool TryParse<T>(ReadOnlySpan<char> value, out T? result) where T : INumber<T> => //Convenience method for console applications
         T.TryParse(value, System.Globalization.CultureInfo.InvariantCulture, out result);
 
-    public static T ZScore<T>(in IEnumerable<T> listOfNumbers, in T fallbackZScoreValue) where T : INumber<T>
+    public static T ZScore<T>(IEnumerable<T> listOfNumbers, T fallbackZScoreValue) where T : INumber<T>
     {
         switch (listOfNumbers)
         {
