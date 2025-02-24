@@ -173,9 +173,6 @@ public static class Generic
         };
     }
 
-    public static bool TryParse<T>(ReadOnlySpan<char> value, out T? result) where T : INumber<T> => //Convenience method for console applications
-        T.TryParse(value, System.Globalization.CultureInfo.InvariantCulture, out result);
-
     public static T ZScore<T>(IEnumerable<T> listOfNumbers, T fallbackZScoreValue) where T : INumber<T>
     {
         switch (listOfNumbers)
