@@ -24,7 +24,7 @@ public static class Generic
                     newDoubleListOfNumbers[i] = double.CreateTruncating(listOfNumbers.AtIndex(i));
 
                 return T.CreateChecked(AdvancedMath.CoefficientOfVariation(in newDoubleListOfNumbers));
-        };
+        }
     }
 
     public static T CoefficientOfVariation<T>(T mean, T standardDeviation, T value) where T : INumber<T> =>
@@ -53,7 +53,7 @@ public static class Generic
                 }).ConfigureAwait(false);
 
                 return T.CreateChecked(AdvancedMath.CoefficientOfVariation(in newDoubleListOfNumbers));
-        };
+        }
     }
 
     public static bool LessThanOrEqualToZero<T>(T value) where T : INumber<T> => value <= T.Zero;
@@ -145,7 +145,7 @@ public static class Generic
                     newDoubleListOfNumbers[i] = double.CreateTruncating(listOfNumbers.AtIndex(i));
 
                 return T.CreateChecked(AdvancedMath.StandardDeviation(in newDoubleListOfNumbers));
-        };
+        }
     }
 
     public static async Task<T> StandardDeviationAsync<T>(IEnumerable<T> listOfNumbers) where T : INumber<T>
@@ -170,7 +170,7 @@ public static class Generic
                     }
                 }).ConfigureAwait(false);
                 return T.CreateChecked(AdvancedMath.StandardDeviation(in newDoubleListOfNumbers));
-        };
+        }
     }
 
     public static T ZScore<T>(IEnumerable<T> listOfNumbers, T fallbackZScoreValue) where T : INumber<T>
@@ -190,7 +190,7 @@ public static class Generic
                     newDoubleListOfNumbers[i] = double.CreateTruncating(listOfNumbers.AtIndex(i));
 
                 return T.CreateChecked(AdvancedMath.ZScore(in newDoubleListOfNumbers, double.CreateTruncating(fallbackZScoreValue)));
-        };
+        }
     }
 
     public static async Task<T> ZScoreAsync<T>(IEnumerable<T> listOfNumbers, T fallbackZScoreValue) where T : INumber<T>
@@ -216,6 +216,6 @@ public static class Generic
                 }).ConfigureAwait(false);
 
                 return T.CreateChecked(AdvancedMath.ZScore(in newDoubleListOfNumbers, double.CreateTruncating(fallbackZScoreValue)));
-        };
+        }
     }
 }
