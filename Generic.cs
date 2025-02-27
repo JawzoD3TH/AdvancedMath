@@ -63,7 +63,7 @@ public static class Generic
         if (values.Length < 1)
             return true;
 
-        for (int i = 0; i < values.Length; i++)
+        for (var i = 0; i < values.Length; i++)
         {
             if (LessThanOrEqualToZero(values[i]))
                 return true;
@@ -81,7 +81,7 @@ public static class Generic
 
         await Task.Run(async () =>
         {
-            for (int i = 0; i < values.Length; i++)
+            for (var i = 0; i < values.Length; i++)
             {
                 if (LessThanOrEqualToZero(values[i]))
                 {
