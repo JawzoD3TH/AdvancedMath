@@ -270,21 +270,27 @@ public static class AdvancedMath
 
             var zScores = new decimal[listOfNumbers.Length];
 
-            return await Task.Run(async () =>
+            await Parallel.ForAsync(0, listOfNumbers.Length, async (i, _) =>
+            {
+                zScores[i] = (listOfNumbers[i] - mean) / standardDeviation;
+
+                //Ensure positive score:
+                /* if (zScores[i] < 0)
+                    zScores[i] = zScores[i] * decimal.MinusOne; */
+
+                await Task.Yield();
+            }).ConfigureAwait(false);
+
+            /* await Task.Run(async () =>
             {
                 for (var i = 0; i < listOfNumbers.Length; i++)
                 {
                     zScores[i] = (listOfNumbers[i] - mean) / standardDeviation;
-
-                    //Ensure positive score:
-                    /* if (zScores[i] < 0)
-                        zScores[i] = zScores[i] * decimal.MinusOne; */
-
                     await Task.Yield();
                 }
+            }).ConfigureAwait(false); */
 
-                return await zScores.AverageAsync().ConfigureAwait(false);
-            }).ConfigureAwait(false);
+            return await zScores.AverageAsync().ConfigureAwait(false);
         }
         catch { return fallbackZScoreValue; }
     }
