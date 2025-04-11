@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Threading;
 using System.Threading.Tasks;
+using static AdvancedMath.AdvancedMath;
+using static AdvancedMath.ParallelTasks;
 
 namespace AdvancedMath;
 
@@ -20,8 +23,10 @@ public static class Generic
             default:
                 var count = listOfNumbers.GetLength();
                 var newDoubleListOfNumbers = new double[count];
-                for (var i = 0; i < count; i++)
-                    newDoubleListOfNumbers[i] = double.CreateTruncating(listOfNumbers.AtIndex(i));
+                if (CanParallelProcess() && IsLargeArray(count))
+                    Parallel.For(0, count, ParallelSettings, (i, _) => newDoubleListOfNumbers[i] = double.CreateTruncating(listOfNumbers.AtIndex(i)));
+                else for (var i = 0; i < count; i++)
+                        newDoubleListOfNumbers[i] = double.CreateTruncating(listOfNumbers.AtIndex(i));
 
                 return T.CreateChecked(AdvancedMath.CoefficientOfVariation(in newDoubleListOfNumbers));
         }
@@ -43,7 +48,16 @@ public static class Generic
             default:
                 var count = listOfNumbers.GetLength();
                 var newDoubleListOfNumbers = new double[count];
-                await Task.Run(async () =>
+
+                if (CanParallelProcess() && IsLargeArray(count))
+                {
+                    await Parallel.ForAsync(0, count, ParallelSettings, async (i, _) =>
+                    {
+                        newDoubleListOfNumbers[i] = double.CreateTruncating(listOfNumbers.AtIndex(i));
+                        await Task.Yield();
+                    }).ConfigureAwait(false);
+                }
+                else await Task.Run(async () =>
                 {
                     for (var i = 0; i < count; i++)
                     {
@@ -63,14 +77,30 @@ public static class Generic
         if (values.Length < 1)
             return true;
 
-        for (var i = 0; i < values.Length; i++)
+        bool result = false;
+        if (CanParallelProcess() && IsLargeArray(values.Length))
+        {
+            Parallel.For(0, values.Length, ParallelSettings, (i, state) =>
+            {
+                if (LessThanOrEqualToZero(values[i]))
+                {
+                    result = true;
+                    state.Break(); // Cancel the operation if the condition is met
+                }
+            });
+        }
+        else for (var i = 0; i < values.Length; i++)
         {
             if (LessThanOrEqualToZero(values[i]))
                 return true;
         }
 
-        return false;
+        return result;
     }
+
+    // Fix for CS1660: The issue arises because the lambda expression provided to `Parallel.ForAsync` is not compatible with the expected delegate type.
+    // The `Parallel.ForAsync` method expects a delegate with a specific signature, and the lambda provided does not match it.
+    // To fix this, we need to ensure the lambda matches the expected signature.
 
     public static async Task<bool> ManyLessThanOrEqualToZeroAsync<T>(params T[] values) where T : INumber<T>
     {
@@ -79,7 +109,26 @@ public static class Generic
 
         bool result = false;
 
-        await Task.Run(async () =>
+        if (CanParallelProcess() && IsLargeArray(values.Length))
+        {
+            using (CancellationTokenSource cts = new())
+            {
+                await Parallel.ForAsync(0, values.Length, ParallelSettingsWithEarlyBreak(cts), async (i, ct) =>
+                {
+                    // Check for cancellation
+                    ct.ThrowIfCancellationRequested();
+
+                    if (LessThanOrEqualToZero(values[i]))
+                    {
+                        result = true;
+                        cts.Cancel(); // Cancel the operation if the condition is met
+                    }
+
+                    await Task.Yield();
+                }).ConfigureAwait(false);
+            }
+        }
+        else await Task.Run(async () =>
         {
             for (var i = 0; i < values.Length; i++)
             {
@@ -141,7 +190,9 @@ public static class Generic
             default:
                 var count = listOfNumbers.GetLength();
                 var newDoubleListOfNumbers = new double[count];
-                for (var i = 0; i < count; i++)
+                if (CanParallelProcess() && IsLargeArray(count))
+                    Parallel.For(0, count, ParallelSettings, (i, _) => newDoubleListOfNumbers[i] = double.CreateTruncating(listOfNumbers.AtIndex(i)));
+                else for (var i = 0; i < count; i++)
                     newDoubleListOfNumbers[i] = double.CreateTruncating(listOfNumbers.AtIndex(i));
 
                 return T.CreateChecked(AdvancedMath.StandardDeviation(in newDoubleListOfNumbers));
@@ -161,7 +212,16 @@ public static class Generic
             default:
                 var count = listOfNumbers.GetLength();
                 var newDoubleListOfNumbers = new double[count];
-                await Task.Run(async () =>
+
+                if (CanParallelProcess() && IsLargeArray(count))
+                {
+                    await Parallel.ForAsync(0, count, async (i, _) =>
+                    {
+                        newDoubleListOfNumbers[i] = double.CreateTruncating(listOfNumbers.AtIndex(i));
+                        await Task.Yield();
+                    }).ConfigureAwait(false);
+                }
+                else await Task.Run(async () =>
                 {
                     for (var i = 0; i < count; i++)
                     {
@@ -178,18 +238,20 @@ public static class Generic
         switch (listOfNumbers)
         {
             case decimal[] decimalListOfNumbers when fallbackZScoreValue is decimal decimalZScore:
-                return T.CreateChecked(AdvancedMath.ZScore(in decimalListOfNumbers, in decimalZScore));
+                return T.CreateChecked(AdvancedMath.ZScore(decimalListOfNumbers, in decimalZScore));
 
             case double[] doubleListOfNumbers when fallbackZScoreValue is double doubleZScore:
-                return T.CreateChecked(AdvancedMath.ZScore(in doubleListOfNumbers, in doubleZScore));
+                return T.CreateChecked(AdvancedMath.ZScore(doubleListOfNumbers, in doubleZScore));
 
             default:
                 var count = listOfNumbers.GetLength();
                 var newDoubleListOfNumbers = new double[count];
-                for (var i = 0; i < count; i++)
+                if (CanParallelProcess() && IsLargeArray(count))
+                    Parallel.For(0, count, ParallelSettings, (i, _) => newDoubleListOfNumbers[i] = double.CreateTruncating(listOfNumbers.AtIndex(i)));
+                else for(var i = 0; i < count; i++)
                     newDoubleListOfNumbers[i] = double.CreateTruncating(listOfNumbers.AtIndex(i));
 
-                return T.CreateChecked(AdvancedMath.ZScore(in newDoubleListOfNumbers, double.CreateTruncating(fallbackZScoreValue)));
+                return T.CreateChecked(AdvancedMath.ZScore(newDoubleListOfNumbers, double.CreateTruncating(fallbackZScoreValue)));
         }
     }
 
@@ -201,12 +263,21 @@ public static class Generic
                 return T.CreateChecked(await AdvancedMath.ZScoreAsync(decimalListOfNumbers, decimalZScore).ConfigureAwait(false));
 
             case double[] doubleListOfNumbers when fallbackZScoreValue is double doubleZScore:
-                return T.CreateChecked(AdvancedMath.ZScore(in doubleListOfNumbers, in doubleZScore));
+                return T.CreateChecked(AdvancedMath.ZScore(doubleListOfNumbers, in doubleZScore));
 
             default:
                 var count = listOfNumbers.GetLength();
                 var newDoubleListOfNumbers = new double[count];
-                await Task.Run(async () =>
+
+                if (CanParallelProcess() && IsLargeArray(count))
+                {
+                    await Parallel.ForAsync(0, count, ParallelSettings, async (i, _) =>
+                    {
+                        newDoubleListOfNumbers[i] = double.CreateTruncating(listOfNumbers.AtIndex(i));
+                        await Task.Yield();
+                    }).ConfigureAwait(false);
+                }
+                else await Task.Run(async () =>
                 {
                     for (var i = 0; i < count; i++)
                     {
@@ -215,7 +286,7 @@ public static class Generic
                     }
                 }).ConfigureAwait(false);
 
-                return T.CreateChecked(AdvancedMath.ZScore(in newDoubleListOfNumbers, double.CreateTruncating(fallbackZScoreValue)));
+                return T.CreateChecked(AdvancedMath.ZScore(newDoubleListOfNumbers, double.CreateTruncating(fallbackZScoreValue)));
         }
     }
 }

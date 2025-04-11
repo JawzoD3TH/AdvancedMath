@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
+using static AdvancedMath.ParallelTasks;
 
 namespace AdvancedMath;
 
@@ -11,13 +12,14 @@ public static class AdvancedMath
     public const double DoubleTwo = 2d;
     public const decimal FastAccuracy = 0.0001m;
     public const decimal PrecisionAccuracy = 0.0000000000000000000000000001m;
+    public const int SmallArraySizeLimit = 63;
 
     public static double CoefficientOfVariation(in double[] listOfNumbers)
     {
         if (listOfNumbers.Length < 2)
             return DoubleOne;
 
-        var result = StandardDeviation(listOfNumbers) / listOfNumbers.Average();
+        var result = StandardDeviation(in listOfNumbers) / listOfNumbers.Average();
         return Generic.LessThanOrEqualToZero(result) ? DoubleOne : result;
     }
 
@@ -26,7 +28,7 @@ public static class AdvancedMath
         if (listOfNumbers.Length < 2)
             return decimal.One;
 
-        var result = StandardDeviation(listOfNumbers) / listOfNumbers.Average();
+        var result = StandardDeviation(in listOfNumbers) / listOfNumbers.Average();
         return Generic.LessThanOrEqualToZero(result) ? decimal.One : result;
     }
 
@@ -38,6 +40,8 @@ public static class AdvancedMath
         var result = await StandardDeviationAsync(listOfNumbers).ConfigureAwait(false) / await listOfNumbers.AverageAsync().ConfigureAwait(false);
         return Generic.LessThanOrEqualToZero(result) ? decimal.One : result;
     }
+
+    public static bool IsLargeArray(int length) => length > SmallArraySizeLimit;
 
     public static decimal Power(in decimal value, int power)
     {
@@ -184,7 +188,7 @@ public static class AdvancedMath
             var sumOfSquares = listOfNumbers.Sum(x => (x - mean) * (x - mean));
             var variance = sumOfSquares / (listOfNumbers.Length - 1);
 
-            return SquareRoot(variance);
+            return SquareRoot(in variance);
         }
         catch { return SquareRoot(listOfNumbers.Sum(x => Power(x - mean, 2)) / (listOfNumbers.Length - 1)); }
     }
@@ -206,19 +210,21 @@ public static class AdvancedMath
         catch { return await SquareRootAsync(listOfNumbers.Sum(x => Power(x - mean, 2)) / (listOfNumbers.Length - 1)).ConfigureAwait(false); }
     }
 
-    public static decimal ZScore(in decimal[] listOfNumbers, in decimal fallbackZScoreValue)
+    public static decimal ZScore(decimal[] listOfNumbers, in decimal fallbackZScoreValue)
     {
         try
         {
             var mean = listOfNumbers.Average();
-            var standardDeviation = StandardDeviation(listOfNumbers);
+            var standardDeviation = StandardDeviation(in listOfNumbers);
 
             if (standardDeviation == decimal.Zero)
                 return decimal.Zero;
 
             var zScores = new decimal[listOfNumbers.Length];
 
-            for (var i = 0; i < listOfNumbers.Length; i++)
+            if (CanParallelProcess() && IsLargeArray(listOfNumbers.Length))
+                Parallel.For(0, listOfNumbers.Length, i => zScores[i] = (listOfNumbers[i] - mean) / standardDeviation);
+            else for (var i = 0; i < listOfNumbers.Length; i++)
             {
                 zScores[i] = (listOfNumbers[i] - mean) / standardDeviation;
 
@@ -232,19 +238,20 @@ public static class AdvancedMath
         catch { return fallbackZScoreValue; }
     }
 
-    public static double ZScore(in double[] listOfNumbers, in double fallbackZScoreValue)
+    public static double ZScore(double[] listOfNumbers, in double fallbackZScoreValue)
     {
         try
         {
             var mean = listOfNumbers.Average();
-            var standardDeviation = StandardDeviation(listOfNumbers);
+            var standardDeviation = StandardDeviation(in listOfNumbers);
 
             if (standardDeviation == double.NegativeZero)
                 return double.NegativeZero;
 
             var zScores = new double[listOfNumbers.Length];
-
-            for (var i = 0; i < listOfNumbers.Length; i++)
+            if (CanParallelProcess() && IsLargeArray(listOfNumbers.Length))
+                Parallel.For(0, listOfNumbers.Length, i => zScores[i] = (listOfNumbers[i] - mean) / standardDeviation);
+            else for (var i = 0; i < listOfNumbers.Length; i++)
             {
                 zScores[i] = (listOfNumbers[i] - mean) / standardDeviation;
 
@@ -269,26 +276,27 @@ public static class AdvancedMath
                 return decimal.Zero;
 
             var zScores = new decimal[listOfNumbers.Length];
-
-            await Parallel.ForAsync(0, listOfNumbers.Length, async (i, _) =>
+            if (CanParallelProcess() && IsLargeArray(listOfNumbers.Length))
             {
-                zScores[i] = (listOfNumbers[i] - mean) / standardDeviation;
-
-                //Ensure positive score:
-                /* if (zScores[i] < 0)
-                    zScores[i] = zScores[i] * decimal.MinusOne; */
-
-                await Task.Yield();
-            }).ConfigureAwait(false);
-
-            /* await Task.Run(async () =>
-            {
-                for (var i = 0; i < listOfNumbers.Length; i++)
+                await Parallel.ForAsync(0, listOfNumbers.Length, async (i, _) =>
                 {
                     zScores[i] = (listOfNumbers[i] - mean) / standardDeviation;
+
+                    //Ensure positive score:
+                    /* if (zScores[i] < 0)
+                        zScores[i] = zScores[i] * decimal.MinusOne; */
+
                     await Task.Yield();
-                }
-            }).ConfigureAwait(false); */
+                }).ConfigureAwait(false);
+            }
+            else await Task.Run(async () =>
+                {
+                    for (var i = 0; i < listOfNumbers.Length; i++)
+                    {
+                        zScores[i] = (listOfNumbers[i] - mean) / standardDeviation;
+                        await Task.Yield();
+                    }
+                }).ConfigureAwait(false);
 
             return await zScores.AverageAsync().ConfigureAwait(false);
         }
