@@ -113,16 +113,16 @@ public static class Generic
         {
             using (CancellationTokenSource cts = new())
             {
-                await Parallel.ForAsync(0, values.Length, ParallelSettingsWithEarlyBreak(cts), async (i, ct) =>
+                await Parallel.ForAsync(0, values.Length, ParallelSettingsWithEarlyBreak(cts.Token), async (i, ct) =>
                 {
-                    // Check for cancellation
-                    ct.ThrowIfCancellationRequested();
-
                     if (LessThanOrEqualToZero(values[i]))
                     {
                         result = true;
                         cts.Cancel(); // Cancel the operation if the condition is met
                     }
+
+                    // Check for cancellation
+                    ct.ThrowIfCancellationRequested();
 
                     await Task.Yield();
                 }).ConfigureAwait(false);

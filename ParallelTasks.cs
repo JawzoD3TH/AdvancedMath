@@ -13,10 +13,10 @@ public static class ParallelTasks
 
     public static bool CanParallelProcess() => Environment.ProcessorCount > 3;
 
-    public static ParallelOptions ParallelSettingsWithEarlyBreak(CancellationTokenSource cancellationTokenSource) => new()
+    public static ParallelOptions ParallelSettingsWithEarlyBreak(CancellationToken token) => new()
     {
         MaxDegreeOfParallelism = AmountOfThreads(),
-        CancellationToken = cancellationTokenSource.Token
+        CancellationToken = token
     };
 
     private static int AmountOfThreads() => (Environment.ProcessorCount < 3) ? 1 : Environment.ProcessorCount - 1;
