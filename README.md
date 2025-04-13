@@ -1,8 +1,8 @@
 # Advanced Math
 
-AdvancedMath is a high-performance, generic mathematical library for .NET, designed to handle advanced mathematical operations with support for parallel processing where feasible.
-It leverages modern C# features and targets .NET 9 for optimal performance. It provides advanced mathematical functions and utilities. It supports both synchronous and asynchronous
-methods for various numerical operations.
+AdvancedMath is a cutting-edge, high-performance generic mathematical library for .NET, designed to compute advanced operations, even parallel processing when feasible.  
+Built with modern C# features and targeting .NET 9, it delivers optimal performance and includes a wide range of advanced mathematical functions and utilities. 
+The library supports both synchronous and asynchronous methods for various numerical computations.
 
 ## Features
 
