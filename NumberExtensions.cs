@@ -20,7 +20,7 @@ public static class NumberExtensions
 
         }
         catch { }
-
+        
         return source.AsParallel().WithDegreeOfParallelism(AmountOfThreads()).ElementAt(index);
     }
 
