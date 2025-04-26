@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
+using static AdvancedMath.ParallelTasks;
 
 namespace AdvancedMath;
 
@@ -20,7 +21,7 @@ public static class NumberExtensions
         }
         catch { }
 
-        return source.ElementAt(index);
+        return source.AsParallel().WithDegreeOfParallelism(AmountOfThreads()).ElementAt(index);
     }
 
     public static T Average<T>(this IEnumerable<T> source) where T : INumber<T> => source.Sum() / T.CreateChecked(source.GetLength());
@@ -39,13 +40,14 @@ public static class NumberExtensions
         }
         catch { }
 
-        return source.Count();
+        return source.AsParallel().WithDegreeOfParallelism(AmountOfThreads()).Count();
     }
 
     public static T Max<T>(this IEnumerable<T> source) where T : INumber<T>
     {
         var max = source.First();
 
+        //Do not Parallel Process
         foreach (var item in source)
         {
             if (item > max)

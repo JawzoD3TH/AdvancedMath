@@ -215,7 +215,7 @@ public static class Generic
 
                 if (CanParallelProcess() && IsLargeArray(count))
                 {
-                    await Parallel.ForAsync(0, count, async (i, _) =>
+                    await Parallel.ForAsync(0, count, ParallelSettings, async (i, _) =>
                     {
                         newDoubleListOfNumbers[i] = double.CreateTruncating(listOfNumbers.AtIndex(i));
                         await Task.Yield();

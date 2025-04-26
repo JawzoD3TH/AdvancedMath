@@ -223,7 +223,7 @@ public static class AdvancedMath
             var zScores = new decimal[listOfNumbers.Length];
 
             if (CanParallelProcess() && IsLargeArray(listOfNumbers.Length))
-                Parallel.For(0, listOfNumbers.Length, i => zScores[i] = (listOfNumbers[i] - mean) / standardDeviation);
+                Parallel.For(0, listOfNumbers.Length, ParallelSettings, i => zScores[i] = (listOfNumbers[i] - mean) / standardDeviation);
             else for (var i = 0; i < listOfNumbers.Length; i++)
             {
                 zScores[i] = (listOfNumbers[i] - mean) / standardDeviation;
@@ -250,7 +250,7 @@ public static class AdvancedMath
 
             var zScores = new double[listOfNumbers.Length];
             if (CanParallelProcess() && IsLargeArray(listOfNumbers.Length))
-                Parallel.For(0, listOfNumbers.Length, i => zScores[i] = (listOfNumbers[i] - mean) / standardDeviation);
+                Parallel.For(0, listOfNumbers.Length, ParallelSettings, i => zScores[i] = (listOfNumbers[i] - mean) / standardDeviation);
             else for (var i = 0; i < listOfNumbers.Length; i++)
             {
                 zScores[i] = (listOfNumbers[i] - mean) / standardDeviation;
@@ -278,7 +278,7 @@ public static class AdvancedMath
             var zScores = new decimal[listOfNumbers.Length];
             if (CanParallelProcess() && IsLargeArray(listOfNumbers.Length))
             {
-                await Parallel.ForAsync(0, listOfNumbers.Length, async (i, _) =>
+                await Parallel.ForAsync(0, listOfNumbers.Length, ParallelSettings, async (i, _) =>
                 {
                     zScores[i] = (listOfNumbers[i] - mean) / standardDeviation;
 
