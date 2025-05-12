@@ -89,9 +89,9 @@ public static class Generic
                 }
             });
         }
-        else for (var i = 0; i < values.Length; i++)
+        else foreach (var value in values)
         {
-            if (LessThanOrEqualToZero(values[i]))
+            if (LessThanOrEqualToZero(value))
                 return true;
         }
 
@@ -118,7 +118,7 @@ public static class Generic
                     if (LessThanOrEqualToZero(values[i]))
                     {
                         result = true;
-                        cts.Cancel(); // Cancel the operation if the condition is met
+                        await cts.CancelAsync().ConfigureAwait(false); // Cancel the operation if the condition is met
                     }
 
                     // Check for cancellation
@@ -130,9 +130,9 @@ public static class Generic
         }
         else await Task.Run(async () =>
         {
-            for (var i = 0; i < values.Length; i++)
+            foreach (var value in values)
             {
-                if (LessThanOrEqualToZero(values[i]))
+                if (LessThanOrEqualToZero(value))
                 {
                     result = true;
                     break;
