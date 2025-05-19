@@ -20,7 +20,7 @@ public static class AdvancedMath
             return DoubleOne;
 
         var result = StandardDeviation(in listOfNumbers) / listOfNumbers.Average();
-        return Generic.LessThanOrEqualToZero(result) ? DoubleOne : result;
+        return Generic.NullOrLessThanOrEqualToZero(result) ? DoubleOne : result;
     }
 
     public static decimal CoefficientOfVariation(in decimal[] listOfNumbers)
@@ -29,7 +29,7 @@ public static class AdvancedMath
             return decimal.One;
 
         var result = StandardDeviation(in listOfNumbers) / listOfNumbers.Average();
-        return Generic.LessThanOrEqualToZero(result) ? decimal.One : result;
+        return Generic.NullOrLessThanOrEqualToZero(result) ? decimal.One : result;
     }
 
     public static async Task<decimal> CoefficientOfVariationAsync(decimal[] listOfNumbers)
@@ -38,7 +38,7 @@ public static class AdvancedMath
             return decimal.One;
 
         var result = await StandardDeviationAsync(listOfNumbers).ConfigureAwait(false) / await listOfNumbers.AverageAsync().ConfigureAwait(false);
-        return Generic.LessThanOrEqualToZero(result) ? decimal.One : result;
+        return Generic.NullOrLessThanOrEqualToZero(result) ? decimal.One : result;
     }
 
     public static bool IsLargeArray(int length) => length > SmallArraySizeLimit;
@@ -116,7 +116,7 @@ public static class AdvancedMath
 
     public static decimal SquareRoot(in decimal value, decimal accuracy = FastAccuracy)
     {
-        if (Generic.LessThanOrEqualToZero(value))
+        if (Generic.NullOrLessThanOrEqualToZero(value))
             return decimal.Zero;
 
         if (accuracy < PrecisionAccuracy)
@@ -136,7 +136,7 @@ public static class AdvancedMath
 
     public static async Task<decimal> SquareRootAsync(decimal value, decimal accuracy = FastAccuracy)
     {
-        if (Generic.LessThanOrEqualToZero(value))
+        if (Generic.NullOrLessThanOrEqualToZero(value))
             return decimal.Zero;
 
         if (accuracy < PrecisionAccuracy)

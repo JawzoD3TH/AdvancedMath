@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
-using System.Threading;
 using System.Threading.Tasks;
 using static AdvancedMath.AdvancedMath;
 using static AdvancedMath.ParallelTasks;
@@ -70,10 +69,13 @@ public static class Generic
         }
     }
 
-    public static bool LessThanOrEqualToZero<T>(T value) where T : INumber<T> => value <= T.Zero;
+    public static bool NullOrLessThanOrEqualToZero<T>(T? value) where T : INumber<T> => value != null && value <= T.Zero;
 
-    public static bool ManyLessThanOrEqualToZero<T>(params T[] values) where T : INumber<T>
+    public static bool ManyNullOrLessThanOrEqualToZero<T>(params T[]? values) where T : INumber<T>
     {
+        if (values is null)
+            return true;
+
         if (values.LessThan())
             return true;
 
@@ -82,7 +84,7 @@ public static class Generic
         {
             Parallel.For(0, values.Length, ParallelSettings, (i, state) =>
             {
-                if (LessThanOrEqualToZero(values[i]))
+                if (NullOrLessThanOrEqualToZero(values[i]))
                 {
                     result = true;
                     state.Break(); // Cancel the operation if the condition is met
@@ -90,10 +92,10 @@ public static class Generic
             });
         }
         else foreach (var value in values)
-        {
-            if (LessThanOrEqualToZero(value))
-                return true;
-        }
+            {
+                if (NullOrLessThanOrEqualToZero(value))
+                    return true;
+            }
 
         return result;
     }
@@ -146,7 +148,7 @@ public static class Generic
                 if (CanParallelProcess() && IsLargeArray(count))
                     Parallel.For(0, count, ParallelSettings, (i, _) => newDoubleListOfNumbers[i] = double.CreateTruncating(listOfNumbers.AtIndex(i)));
                 else for (var i = 0; i < count; i++)
-                    newDoubleListOfNumbers[i] = double.CreateTruncating(listOfNumbers.AtIndex(i));
+                        newDoubleListOfNumbers[i] = double.CreateTruncating(listOfNumbers.AtIndex(i));
 
                 return T.CreateChecked(AdvancedMath.StandardDeviation(in newDoubleListOfNumbers));
         }
@@ -201,8 +203,8 @@ public static class Generic
                 var newDoubleListOfNumbers = new double[count];
                 if (CanParallelProcess() && IsLargeArray(count))
                     Parallel.For(0, count, ParallelSettings, (i, _) => newDoubleListOfNumbers[i] = double.CreateTruncating(listOfNumbers.AtIndex(i)));
-                else for(var i = 0; i < count; i++)
-                    newDoubleListOfNumbers[i] = double.CreateTruncating(listOfNumbers.AtIndex(i));
+                else for (var i = 0; i < count; i++)
+                        newDoubleListOfNumbers[i] = double.CreateTruncating(listOfNumbers.AtIndex(i));
 
                 return T.CreateChecked(AdvancedMath.ZScore(newDoubleListOfNumbers, double.CreateTruncating(fallbackZScoreValue)));
         }
