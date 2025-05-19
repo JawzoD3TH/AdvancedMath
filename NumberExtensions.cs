@@ -8,26 +8,26 @@ namespace AdvancedMath;
 
 public static class NumberExtensions
 {
-    public static T AtIndex<T>(this IEnumerable<T> source, int index)
+    public static TSource AtIndex<TSource>(this IEnumerable<TSource> source, int index)
     {
         ArgumentNullException.ThrowIfNull(source);
 
         try
         {
-            if (source is T[] array)
+            if (source is TSource[] array)
                 return array[index];
 
         }
         catch { }
-        
+
         return source.ElementAt(index);
     }
 
-    public static T Average<T>(this IEnumerable<T> source) where T : INumber<T> => source.Sum() / T.CreateChecked(source.GetLength());
+    public static T Average<T>(this IEnumerable<T> source) where T : INumber<T> => source.Sum() / T.CreateChecked(source.GetLengthOrCount());
 
-    public static async Task<T> AverageAsync<T>(this IEnumerable<T> source) where T : INumber<T> => await source.SumAsync().ConfigureAwait(false) / T.CreateChecked(source.GetLength());
+    public static async Task<T> AverageAsync<T>(this IEnumerable<T> source) where T : INumber<T> => await source.SumAsync().ConfigureAwait(false) / T.CreateChecked(source.GetLengthOrCount());
 
-    public static int GetLength<TSource>(this IEnumerable<TSource> source)
+    public static int GetLengthOrCount<TSource>(this IEnumerable<TSource> source)
     {
         ArgumentNullException.ThrowIfNull(source);
 
@@ -40,6 +40,25 @@ public static class NumberExtensions
         catch { }
 
         return source.Count();
+    }
+
+    public static bool LessThan<TSource>(this IEnumerable<TSource> source, int exclusive = 1)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+
+        if (TryGetLengthOrCount(source, out int? count))
+            return count < exclusive;
+
+        count = 1;
+        foreach (var _ in source)
+        {
+            if (count >= exclusive)
+                return false;
+
+            count++;
+        }
+
+        return true;
     }
 
     public static T Max<T>(this IEnumerable<T> source) where T : INumber<T>
@@ -97,5 +116,34 @@ public static class NumberExtensions
         }).ConfigureAwait(false);
 
         return sum;
+    }
+
+    public static bool TryGetLengthOrCount<TSource>(this IEnumerable<TSource> source, out int? length)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+
+        try
+        {
+            if (source is TSource[] array)
+            {
+                length = array.Length;
+                return true;
+            }
+
+        }
+        catch { }
+
+        try
+        {
+            if (source is ICollection<TSource> collection)
+            {
+                length = collection.Count;
+                return true;
+            }
+        }
+        catch { }
+        
+        length = null;
+        return false;
     }
 }

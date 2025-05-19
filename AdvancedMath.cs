@@ -16,7 +16,7 @@ public static class AdvancedMath
 
     public static double CoefficientOfVariation(in double[] listOfNumbers)
     {
-        if (listOfNumbers.Length < 2)
+        if (listOfNumbers.LessThan(2))
             return DoubleOne;
 
         var result = StandardDeviation(in listOfNumbers) / listOfNumbers.Average();
@@ -25,7 +25,7 @@ public static class AdvancedMath
 
     public static decimal CoefficientOfVariation(in decimal[] listOfNumbers)
     {
-        if (listOfNumbers.Length < 2)
+        if (listOfNumbers.LessThan(2))
             return decimal.One;
 
         var result = StandardDeviation(in listOfNumbers) / listOfNumbers.Average();
@@ -34,7 +34,7 @@ public static class AdvancedMath
 
     public static async Task<decimal> CoefficientOfVariationAsync(decimal[] listOfNumbers)
     {
-        if (listOfNumbers.Length < 2)
+        if (listOfNumbers.LessThan(2))
             return decimal.One;
 
         var result = await StandardDeviationAsync(listOfNumbers).ConfigureAwait(false) / await listOfNumbers.AverageAsync().ConfigureAwait(false);
@@ -161,7 +161,7 @@ public static class AdvancedMath
 
     public static double StandardDeviation(in double[] listOfNumbers)
     {
-        if (listOfNumbers.Length < 2)
+        if (listOfNumbers.LessThan(2))
             return double.NegativeZero;
 
         var mean = listOfNumbers.Average();
@@ -178,7 +178,7 @@ public static class AdvancedMath
 
     public static decimal StandardDeviation(in decimal[] listOfNumbers)
     {
-        if (listOfNumbers.Length < 2)
+        if (listOfNumbers.LessThan(2))
             return decimal.Zero;
 
         var mean = listOfNumbers.Average();
@@ -195,7 +195,7 @@ public static class AdvancedMath
 
     public static async Task<decimal> StandardDeviationAsync(decimal[] listOfNumbers)
     {
-        if (listOfNumbers.Length < 2)
+        if (listOfNumbers.LessThan(2))
             return decimal.Zero;
 
         var mean = await listOfNumbers.AverageAsync().ConfigureAwait(false);
@@ -229,7 +229,7 @@ public static class AdvancedMath
                 zScores[i] = (listOfNumbers[i] - mean) / standardDeviation;
 
                 //Ensure positive score:
-                /* if (zScores[i] < 0)
+                /* if (zScores[i].LessThan(0))
                     zScores[i] = zScores[i] * decimal.MinusOne; */
             }
 
@@ -256,9 +256,9 @@ public static class AdvancedMath
                 zScores[i] = (listOfNumbers[i] - mean) / standardDeviation;
 
                 //Ensure positive score:
-                /* if (zScores[i] < 0)
+                /* if (zScores[i].LessThan(0))
                     zScores[i] = zScores[i] * decimal.MinusOne; */
-            }
+                }
 
             return zScores.Average();
         }
@@ -283,7 +283,7 @@ public static class AdvancedMath
                     zScores[i] = (listOfNumbers[i] - mean) / standardDeviation;
 
                     //Ensure positive score:
-                    /* if (zScores[i] < 0)
+                    /* if (zScores[i].LessThan(0))
                         zScores[i] = zScores[i] * decimal.MinusOne; */
 
                     await Task.Yield();

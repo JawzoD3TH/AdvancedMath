@@ -21,7 +21,7 @@ public static class Generic
                 return T.CreateChecked(AdvancedMath.CoefficientOfVariation(in doubleListOfNumbers));
 
             default:
-                var count = listOfNumbers.GetLength();
+                var count = listOfNumbers.GetLengthOrCount();
                 var newDoubleListOfNumbers = new double[count];
                 if (CanParallelProcess() && IsLargeArray(count))
                     Parallel.For(0, count, ParallelSettings, (i, _) => newDoubleListOfNumbers[i] = double.CreateTruncating(listOfNumbers.AtIndex(i)));
@@ -46,7 +46,7 @@ public static class Generic
                 return T.CreateChecked(AdvancedMath.CoefficientOfVariation(in doubleListOfNumbers));
 
             default:
-                var count = listOfNumbers.GetLength();
+                var count = listOfNumbers.GetLengthOrCount();
                 var newDoubleListOfNumbers = new double[count];
 
                 if (CanParallelProcess() && IsLargeArray(count))
@@ -74,7 +74,7 @@ public static class Generic
 
     public static bool ManyLessThanOrEqualToZero<T>(params T[] values) where T : INumber<T>
     {
-        if (values.Length < 1)
+        if (values.LessThan())
             return true;
 
         bool result = false;
@@ -94,53 +94,6 @@ public static class Generic
             if (LessThanOrEqualToZero(value))
                 return true;
         }
-
-        return result;
-    }
-
-    // Fix for CS1660: The issue arises because the lambda expression provided to `Parallel.ForAsync` is not compatible with the expected delegate type.
-    // The `Parallel.ForAsync` method expects a delegate with a specific signature, and the lambda provided does not match it.
-    // To fix this, we need to ensure the lambda matches the expected signature.
-
-    public static async Task<bool> ManyLessThanOrEqualToZeroAsync<T>(params T[] values) where T : INumber<T>
-    {
-        if (values.Length < 1)
-            return true;
-
-        bool result = false;
-
-        if (CanParallelProcess() && IsLargeArray(values.Length))
-        {
-            using (CancellationTokenSource cts = new())
-            {
-                await Parallel.ForAsync(0, values.Length, ParallelSettingsWithEarlyBreak(cts.Token), async (i, ct) =>
-                {
-                    if (LessThanOrEqualToZero(values[i]))
-                    {
-                        result = true;
-                        await cts.CancelAsync().ConfigureAwait(false); // Cancel the operation if the condition is met
-                    }
-
-                    // Check for cancellation
-                    ct.ThrowIfCancellationRequested();
-
-                    await Task.Yield();
-                }).ConfigureAwait(false);
-            }
-        }
-        else await Task.Run(async () =>
-        {
-            foreach (var value in values)
-            {
-                if (LessThanOrEqualToZero(value))
-                {
-                    result = true;
-                    break;
-                }
-
-                await Task.Yield();
-            }
-        }).ConfigureAwait(false);
 
         return result;
     }
@@ -188,7 +141,7 @@ public static class Generic
                 return T.CreateChecked(AdvancedMath.StandardDeviation(in doubleListOfNumbers));
 
             default:
-                var count = listOfNumbers.GetLength();
+                var count = listOfNumbers.GetLengthOrCount();
                 var newDoubleListOfNumbers = new double[count];
                 if (CanParallelProcess() && IsLargeArray(count))
                     Parallel.For(0, count, ParallelSettings, (i, _) => newDoubleListOfNumbers[i] = double.CreateTruncating(listOfNumbers.AtIndex(i)));
@@ -210,7 +163,7 @@ public static class Generic
                 return T.CreateChecked(AdvancedMath.StandardDeviation(in doubleListOfNumbers));
 
             default:
-                var count = listOfNumbers.GetLength();
+                var count = listOfNumbers.GetLengthOrCount();
                 var newDoubleListOfNumbers = new double[count];
 
                 if (CanParallelProcess() && IsLargeArray(count))
@@ -244,7 +197,7 @@ public static class Generic
                 return T.CreateChecked(AdvancedMath.ZScore(doubleListOfNumbers, in doubleZScore));
 
             default:
-                var count = listOfNumbers.GetLength();
+                var count = listOfNumbers.GetLengthOrCount();
                 var newDoubleListOfNumbers = new double[count];
                 if (CanParallelProcess() && IsLargeArray(count))
                     Parallel.For(0, count, ParallelSettings, (i, _) => newDoubleListOfNumbers[i] = double.CreateTruncating(listOfNumbers.AtIndex(i)));
@@ -266,7 +219,7 @@ public static class Generic
                 return T.CreateChecked(AdvancedMath.ZScore(doubleListOfNumbers, in doubleZScore));
 
             default:
-                var count = listOfNumbers.GetLength();
+                var count = listOfNumbers.GetLengthOrCount();
                 var newDoubleListOfNumbers = new double[count];
 
                 if (CanParallelProcess() && IsLargeArray(count))
