@@ -19,8 +19,15 @@ public static class AdvancedMath
         if (listOfNumbers.LessThan(2))
             return DoubleOne;
 
-        var result = StandardDeviation(in listOfNumbers) / listOfNumbers.Average();
-        return Generic.NullOrLessThanOrEqualToZero(result) ? DoubleOne : result;
+        try
+        {
+            var result = StandardDeviation(in listOfNumbers) / listOfNumbers.Average();
+            return Generic.NullOrLessThanOrEqualToZero(result) ? DoubleOne : result;
+        }
+        catch (DivideByZeroException)
+        {
+            return DoubleOne; // If the average is zero, return 1.0 as the coefficient of variation.
+        }
     }
 
     public static decimal CoefficientOfVariation(in decimal[] listOfNumbers)
@@ -28,8 +35,15 @@ public static class AdvancedMath
         if (listOfNumbers.LessThan(2))
             return decimal.One;
 
-        var result = StandardDeviation(in listOfNumbers) / listOfNumbers.Average();
-        return Generic.NullOrLessThanOrEqualToZero(result) ? decimal.One : result;
+        try
+        {
+            var result = StandardDeviation(in listOfNumbers) / listOfNumbers.Average();
+            return Generic.NullOrLessThanOrEqualToZero(result) ? decimal.One : result;
+        }
+        catch (DivideByZeroException)
+        {
+            return decimal.One; // If the average is zero, return 1.0 as the coefficient of variation.
+        }
     }
 
     public static async Task<decimal> CoefficientOfVariationAsync(decimal[] listOfNumbers)
@@ -37,8 +51,15 @@ public static class AdvancedMath
         if (listOfNumbers.LessThan(2))
             return decimal.One;
 
-        var result = await StandardDeviationAsync(listOfNumbers).ConfigureAwait(false) / await listOfNumbers.AverageAsync().ConfigureAwait(false);
-        return Generic.NullOrLessThanOrEqualToZero(result) ? decimal.One : result;
+        try
+        {
+            var result = await StandardDeviationAsync(listOfNumbers).ConfigureAwait(false) / await listOfNumbers.AverageAsync().ConfigureAwait(false);
+            return Generic.NullOrLessThanOrEqualToZero(result) ? decimal.One : result;
+        }
+        catch (DivideByZeroException)
+        {
+            return decimal.One; // If the average is zero, return 1.0 as the coefficient of variation.
+        }
     }
 
     public static bool IsLargeArray(int length) => length > SmallArraySizeLimit;
