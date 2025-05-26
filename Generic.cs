@@ -69,7 +69,7 @@ public static class Generic
         }
     }
 
-    public static bool NullOrLessThanOrEqualToZero<T>(T? value) where T : INumber<T> => value != null && value <= T.Zero;
+    public static bool NullOrLessThanOrEqualToZero<T>(T? value) where T : INumber<T> => value is null || value <= T.Zero;
 
     public static bool ManyNullOrLessThanOrEqualToZero<T>(params T[]? values) where T : INumber<T>
     {
