@@ -1,7 +1,5 @@
-﻿using System;
-using System.Linq;
+using System;
 using System.Threading.Tasks;
-using static AdvancedMath.ParallelTasks;
 
 namespace AdvancedMath;
 
@@ -14,313 +12,268 @@ public static class AdvancedMath
     public const decimal PrecisionAccuracy = 0.0000000000000000000000000001m;
     public const int SmallArraySizeLimit = 63;
 
+    /// <summary>
+    /// Calculates the sample coefficient of variation, standard deviation divided by
+    /// the arithmetic mean. A single value has no measurable variation and returns zero.
+    /// </summary>
     public static double CoefficientOfVariation(in double[] listOfNumbers)
     {
-        if (listOfNumbers.LessThan(2))
-            return DoubleOne;
+        ArgumentNullException.ThrowIfNull(listOfNumbers);
 
-        try
-        {
-            var result = StandardDeviation(in listOfNumbers) / listOfNumbers.Average();
-            return Generic.NullOrLessThanOrEqualToZero(result) ? DoubleOne : result;
-        }
-        catch (DivideByZeroException)
-        {
-            return DoubleOne; // If the average is zero, return 1.0 as the coefficient of variation.
-        }
+        if (listOfNumbers.Length < 2)
+            return 0d;
+
+        var mean = listOfNumbers.Average();
+        var standardDeviation = StandardDeviation(in listOfNumbers);
+
+        // CV is undefined for a non-zero standard deviation and a zero mean.
+        // IEEE floating point gives the useful representation of that result.
+        if (mean == 0d)
+            return standardDeviation == 0d ? 0d : double.PositiveInfinity;
+
+        return standardDeviation / mean;
     }
 
+    /// <summary>
+    /// Calculates the sample coefficient of variation, standard deviation divided by
+    /// the arithmetic mean. A single value has no measurable variation and returns zero.
+    /// </summary>
     public static decimal CoefficientOfVariation(in decimal[] listOfNumbers)
     {
-        if (listOfNumbers.LessThan(2))
-            return decimal.One;
+        ArgumentNullException.ThrowIfNull(listOfNumbers);
 
-        try
+        if (listOfNumbers.Length < 2)
+            return decimal.Zero;
+
+        var mean = listOfNumbers.Average();
+        var standardDeviation = StandardDeviation(in listOfNumbers);
+
+        if (mean == decimal.Zero)
         {
-            var result = StandardDeviation(in listOfNumbers) / listOfNumbers.Average();
-            return Generic.NullOrLessThanOrEqualToZero(result) ? decimal.One : result;
+            if (standardDeviation == decimal.Zero)
+                return decimal.Zero;
+
+            throw new DivideByZeroException(
+                "The coefficient of variation is undefined when the mean is zero.");
         }
-        catch (DivideByZeroException)
-        {
-            return decimal.One; // If the average is zero, return 1.0 as the coefficient of variation.
-        }
+
+        return standardDeviation / mean;
     }
 
-    public static async Task<decimal> CoefficientOfVariationAsync(decimal[] listOfNumbers)
-    {
-        if (listOfNumbers.LessThan(2))
-            return decimal.One;
-
-        try
-        {
-            var result = await StandardDeviationAsync(listOfNumbers).ConfigureAwait(false) / await listOfNumbers.AverageAsync().ConfigureAwait(false);
-            return Generic.NullOrLessThanOrEqualToZero(result) ? decimal.One : result;
-        }
-        catch (DivideByZeroException)
-        {
-            return decimal.One; // If the average is zero, return 1.0 as the coefficient of variation.
-        }
-    }
+    public static Task<decimal> CoefficientOfVariationAsync(decimal[] listOfNumbers) =>
+        Task.FromResult(CoefficientOfVariation(in listOfNumbers));
 
     public static bool IsLargeArray(int length) => length > SmallArraySizeLimit;
 
+    /// <summary>
+    /// Raises a decimal value to an integer power using exponentiation by squaring.
+    /// </summary>
     public static decimal Power(in decimal value, int power)
     {
+        // 0^0 is conventionally defined as 1 for integer-power operations.
+        if (power == 0)
+            return decimal.One;
+
         if (value == decimal.Zero)
-            return decimal.Zero;
-
-        switch (power)
         {
-            case 0:
-                return decimal.One;
+            if (power < 0)
+                throw new DivideByZeroException("Zero cannot be raised to a negative power.");
 
-            case 1:
-                return value;
+            return decimal.Zero;
         }
 
         var isNegativePower = power < 0;
+        long exponent = power;
         if (isNegativePower)
-            power = -power;
-
-        var result = decimal.One;
-        var baseValue = value;
-
-        while (power > 0)
         {
-            if ((power & 1) == 1)
+            // Widen before negating: -int.MinValue cannot be represented by an int.
+            exponent = -exponent;
+        }
+
+        // Inverting before the loop avoids calculating a large positive power and
+        // then taking its reciprocal. It also avoids avoidable intermediate overflow.
+        var baseValue = isNegativePower ? decimal.One / value : value;
+        var result = decimal.One;
+
+        while (exponent > 0)
+        {
+            if ((exponent & 1) != 0)
                 result *= baseValue;
 
-            baseValue *= baseValue;
-            power >>= 1;
-        }
-
-        return isNegativePower ? decimal.One / result : result;
-    }
-
-    public static async Task<decimal> PowerAsync(decimal value, int power)
-    {
-        if (value == decimal.Zero)
-            return decimal.Zero;
-
-        switch (power)
-        {
-            case 0:
-                return decimal.One;
-
-            case 1:
-                return value;
-        }
-
-        var isNegativePower = power < 0;
-        if (isNegativePower)
-            power = -power;
-
-        var result = decimal.One;
-        var baseValue = value;
-
-        return await Task.Run(async () =>
-        {
-            while (power > 0)
-            {
-                if ((power & 1) == 1)
-                    result *= baseValue;
-
+            exponent >>= 1;
+            if (exponent > 0)
                 baseValue *= baseValue;
-                power >>= 1;
-
-                await Task.Yield();
-            }
-
-            return isNegativePower ? decimal.One / result : result;
-        }).ConfigureAwait(false);
-    }
-
-    public static decimal SquareRoot(in decimal value, decimal accuracy = FastAccuracy)
-    {
-        if (Generic.NullOrLessThanOrEqualToZero(value))
-            return decimal.Zero;
-
-        if (accuracy < PrecisionAccuracy)
-            accuracy = PrecisionAccuracy;
-
-        var guess = value / DecimalTwo;
-        var result = (guess + value / guess) / DecimalTwo;
-
-        while (Math.Abs(guess - result) > accuracy)
-        {
-            guess = result;
-            result = (guess + value / guess) / DecimalTwo;
         }
 
         return result;
     }
 
-    public static async Task<decimal> SquareRootAsync(decimal value, decimal accuracy = FastAccuracy)
+    public static Task<decimal> PowerAsync(decimal value, int power) =>
+        Task.FromResult(Power(in value, power));
+
+    /// <summary>
+    /// Calculates a non-negative square root with Newton's method.
+    /// </summary>
+    public static decimal SquareRoot(in decimal value, decimal accuracy = FastAccuracy)
     {
-        if (Generic.NullOrLessThanOrEqualToZero(value))
+        if (value < decimal.Zero)
+            throw new ArgumentOutOfRangeException(nameof(value), value, "A square root requires a non-negative value.");
+
+        if (value == decimal.Zero)
             return decimal.Zero;
 
-        if (accuracy < PrecisionAccuracy)
+        if (accuracy <= decimal.Zero)
             accuracy = PrecisionAccuracy;
 
-        var guess = value / DecimalTwo;
-        var result = (guess + value / guess) / DecimalTwo;
+        // For values below one, one is a much better initial estimate than value / 2.
+        var guess = value >= decimal.One ? value / DecimalTwo : decimal.One;
 
-        return await Task.Run(async () =>
+        // Decimal has finite precision. The equality check prevents an endless
+        // loop when Newton iteration has reached its rounding fixed point.
+        const int maximumIterations = 256;
+        for (var iteration = 0; iteration < maximumIterations; iteration++)
         {
-            while (Math.Abs(guess - result) > accuracy)
-            {
-                guess = result;
-                result = (guess + value / guess) / DecimalTwo;
+            var result = (guess + value / guess) / DecimalTwo;
+            if (result == guess || Math.Abs(result - guess) <= accuracy)
+                return result;
 
-                await Task.Yield();
-            }
+            guess = result;
+        }
 
-            return result;
-        }).ConfigureAwait(false);
+        return guess;
     }
 
+    public static Task<decimal> SquareRootAsync(decimal value, decimal accuracy = FastAccuracy) =>
+        Task.FromResult(SquareRoot(in value, accuracy));
+
+    /// <summary>
+    /// Calculates the sample standard deviation using a numerically stable
+    /// Welford recurrence.
+    /// </summary>
     public static double StandardDeviation(in double[] listOfNumbers)
     {
-        if (listOfNumbers.LessThan(2))
-            return double.NegativeZero;
+        ArgumentNullException.ThrowIfNull(listOfNumbers);
 
-        var mean = listOfNumbers.Average();
+        if (listOfNumbers.Length < 2)
+            return 0d;
 
-        try
+        double mean = 0d;
+        double sumOfSquaredDifferences = 0d;
+
+        for (var i = 0; i < listOfNumbers.Length; i++)
         {
-            var sumOfSquares = listOfNumbers.Sum(x => (x - mean) * (x - mean));
-            var variance = sumOfSquares / (listOfNumbers.Length - 1);
-
-            return Math.Sqrt(variance);
+            var value = listOfNumbers[i];
+            var delta = value - mean;
+            mean += delta / (i + 1);
+            var differenceFromNewMean = value - mean;
+            sumOfSquaredDifferences += delta * differenceFromNewMean;
         }
-        catch { return Math.Sqrt(listOfNumbers.Sum(x => Math.Pow(x - mean, 2)) / listOfNumbers.Length - 1); }
+
+        // A tiny negative value can only be caused by floating-point rounding.
+        if (sumOfSquaredDifferences < 0d)
+            sumOfSquaredDifferences = 0d;
+
+        return Math.Sqrt(sumOfSquaredDifferences / (listOfNumbers.Length - 1));
     }
 
+    /// <summary>
+    /// Calculates the sample standard deviation using a numerically stable
+    /// Welford recurrence.
+    /// </summary>
     public static decimal StandardDeviation(in decimal[] listOfNumbers)
     {
-        if (listOfNumbers.LessThan(2))
+        ArgumentNullException.ThrowIfNull(listOfNumbers);
+
+        if (listOfNumbers.Length < 2)
             return decimal.Zero;
 
-        var mean = listOfNumbers.Average();
+        decimal mean = decimal.Zero;
+        decimal sumOfSquaredDifferences = decimal.Zero;
 
-        try
+        for (var i = 0; i < listOfNumbers.Length; i++)
         {
-            var sumOfSquares = listOfNumbers.Sum(x => (x - mean) * (x - mean));
-            var variance = sumOfSquares / (listOfNumbers.Length - 1);
-
-            return SquareRoot(in variance);
+            var value = listOfNumbers[i];
+            var delta = value - mean;
+            mean += delta / (i + 1);
+            var differenceFromNewMean = value - mean;
+            sumOfSquaredDifferences += delta * differenceFromNewMean;
         }
-        catch { return SquareRoot(listOfNumbers.Sum(x => Power(x - mean, 2)) / (listOfNumbers.Length - 1)); }
+
+        if (sumOfSquaredDifferences < decimal.Zero)
+            sumOfSquaredDifferences = decimal.Zero;
+
+        var variance = sumOfSquaredDifferences / (listOfNumbers.Length - 1);
+        return SquareRoot(in variance, PrecisionAccuracy);
     }
 
-    public static async Task<decimal> StandardDeviationAsync(decimal[] listOfNumbers)
-    {
-        if (listOfNumbers.LessThan(2))
-            return decimal.Zero;
+    public static Task<decimal> StandardDeviationAsync(decimal[] listOfNumbers) =>
+        Task.FromResult(StandardDeviation(in listOfNumbers));
 
-        var mean = await listOfNumbers.AverageAsync().ConfigureAwait(false);
-
-        try
-        {
-            var sumOfSquares = listOfNumbers.Sum(x => (x - mean) * (x - mean));
-            var variance = sumOfSquares / (listOfNumbers.Length - 1);
-
-            return await SquareRootAsync(variance).ConfigureAwait(false);
-        }
-        catch { return await SquareRootAsync(listOfNumbers.Sum(x => Power(x - mean, 2)) / (listOfNumbers.Length - 1)).ConfigureAwait(false); }
-    }
-
+    /// <summary>
+    /// Returns the mean of the computed z-scores, preserving the existing scalar
+    /// API. For a list standardized around its own mean this value is expected to
+    /// be approximately zero by definition.
+    /// </summary>
     public static decimal ZScore(decimal[] listOfNumbers, in decimal fallbackZScoreValue)
     {
+        ArgumentNullException.ThrowIfNull(listOfNumbers);
+
         try
         {
+            if (listOfNumbers.Length < 2)
+                return fallbackZScoreValue;
+
             var mean = listOfNumbers.Average();
             var standardDeviation = StandardDeviation(in listOfNumbers);
 
             if (standardDeviation == decimal.Zero)
                 return decimal.Zero;
 
-            var zScores = new decimal[listOfNumbers.Length];
+            var sumOfZScores = decimal.Zero;
+            foreach (var value in listOfNumbers)
+                sumOfZScores += (value - mean) / standardDeviation;
 
-            if (CanParallelProcess() && IsLargeArray(listOfNumbers.Length))
-                Parallel.For(0, listOfNumbers.Length, ParallelSettings, i => zScores[i] = (listOfNumbers[i] - mean) / standardDeviation);
-            else for (var i = 0; i < listOfNumbers.Length; i++)
-            {
-                zScores[i] = (listOfNumbers[i] - mean) / standardDeviation;
-
-                //Ensure positive score:
-                /* if (zScores[i].LessThan(0))
-                    zScores[i] = zScores[i] * decimal.MinusOne; */
-            }
-
-            return zScores.Average();
+            return sumOfZScores / listOfNumbers.Length;
         }
-        catch { return fallbackZScoreValue; }
+        catch (ArithmeticException)
+        {
+            return fallbackZScoreValue;
+        }
     }
 
     public static double ZScore(double[] listOfNumbers, in double fallbackZScoreValue)
     {
+        ArgumentNullException.ThrowIfNull(listOfNumbers);
+
         try
         {
+            if (listOfNumbers.Length < 2)
+                return fallbackZScoreValue;
+
             var mean = listOfNumbers.Average();
             var standardDeviation = StandardDeviation(in listOfNumbers);
 
-            if (standardDeviation == double.NegativeZero)
-                return double.NegativeZero;
+            if (standardDeviation == 0d)
+                return 0d;
 
-            var zScores = new double[listOfNumbers.Length];
-            if (CanParallelProcess() && IsLargeArray(listOfNumbers.Length))
-                Parallel.For(0, listOfNumbers.Length, ParallelSettings, i => zScores[i] = (listOfNumbers[i] - mean) / standardDeviation);
-            else for (var i = 0; i < listOfNumbers.Length; i++)
-            {
-                zScores[i] = (listOfNumbers[i] - mean) / standardDeviation;
+            if (double.IsNaN(standardDeviation) || double.IsInfinity(standardDeviation))
+                return fallbackZScoreValue;
 
-                //Ensure positive score:
-                /* if (zScores[i].LessThan(0))
-                    zScores[i] = zScores[i] * decimal.MinusOne; */
-                }
+            var sumOfZScores = 0d;
+            foreach (var value in listOfNumbers)
+                sumOfZScores += (value - mean) / standardDeviation;
 
-            return zScores.Average();
+            var result = sumOfZScores / listOfNumbers.Length;
+            return double.IsNaN(result) || double.IsInfinity(result)
+                ? fallbackZScoreValue
+                : result;
         }
-        catch { return fallbackZScoreValue; }
-    }
-
-    public static async Task<decimal> ZScoreAsync(decimal[] listOfNumbers, decimal fallbackZScoreValue)
-    {
-        try
+        catch (ArithmeticException)
         {
-            var mean = await listOfNumbers.AverageAsync().ConfigureAwait(false);
-            var standardDeviation = await StandardDeviationAsync(listOfNumbers).ConfigureAwait(false);
-
-            if (standardDeviation == decimal.Zero)
-                return decimal.Zero;
-
-            var zScores = new decimal[listOfNumbers.Length];
-            if (CanParallelProcess() && IsLargeArray(listOfNumbers.Length))
-            {
-                await Parallel.ForAsync(0, listOfNumbers.Length, ParallelSettings, async (i, _) =>
-                {
-                    zScores[i] = (listOfNumbers[i] - mean) / standardDeviation;
-
-                    //Ensure positive score:
-                    /* if (zScores[i].LessThan(0))
-                        zScores[i] = zScores[i] * decimal.MinusOne; */
-
-                    await Task.Yield();
-                }).ConfigureAwait(false);
-            }
-            else await Task.Run(async () =>
-                {
-                    for (var i = 0; i < listOfNumbers.Length; i++)
-                    {
-                        zScores[i] = (listOfNumbers[i] - mean) / standardDeviation;
-                        await Task.Yield();
-                    }
-                }).ConfigureAwait(false);
-
-            return await zScores.AverageAsync().ConfigureAwait(false);
+            return fallbackZScoreValue;
         }
-        catch { return fallbackZScoreValue; }
     }
+
+    public static Task<decimal> ZScoreAsync(decimal[] listOfNumbers, decimal fallbackZScoreValue) =>
+        Task.FromResult(ZScore(listOfNumbers, in fallbackZScoreValue));
 }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
@@ -11,91 +11,86 @@ public static class NumberExtensions
     public static TSource AtIndex<TSource>(this IEnumerable<TSource> source, int index)
     {
         ArgumentNullException.ThrowIfNull(source);
+        ArgumentOutOfRangeException.ThrowIfNegative(index);
 
-        try
-        {
-            if (source is TSource[] array)
-                return array[index];
-
-        }
-        catch { }
+        if (source is IList<TSource> list)
+            return list[index];
 
         return source.ElementAt(index);
     }
 
-    public static T Average<T>(this IEnumerable<T> source) where T : INumber<T> => source.Sum() / T.CreateChecked(source.GetLengthOrCount());
+    public static T Average<T>(this IEnumerable<T> source) where T : INumber<T>
+    {
+        ArgumentNullException.ThrowIfNull(source);
 
-    public static async Task<T> AverageAsync<T>(this IEnumerable<T> source) where T : INumber<T> => await source.SumAsync().ConfigureAwait(false) / T.CreateChecked(source.GetLengthOrCount());
+        var sum = T.Zero;
+        var count = 0;
+        foreach (var item in source)
+        {
+            sum += item;
+            count++;
+        }
+
+        if (count == 0)
+            throw new InvalidOperationException("The sequence contains no elements.");
+
+        return sum / T.CreateChecked(count);
+    }
+
+    public static Task<T> AverageAsync<T>(this IEnumerable<T> source) where T : INumber<T> =>
+        Task.FromResult(source.Average());
 
     public static int GetLengthOrCount<TSource>(this IEnumerable<TSource> source)
     {
         ArgumentNullException.ThrowIfNull(source);
-
-        try
-        {
-            if (source is TSource[] array)
-                return array.Length;
-
-        }
-        catch { }
-
-        return source.Count();
+        return source.TryGetNonEnumeratedCount(out var count) ? count : source.Count();
     }
 
     public static bool LessThan<TSource>(this IEnumerable<TSource> source, int exclusive = 1)
     {
         ArgumentNullException.ThrowIfNull(source);
 
-        if (TryGetLengthOrCount(source, out int? count))
+        if (exclusive <= 0)
+            return false;
+
+        if (source.TryGetNonEnumeratedCount(out var count))
             return count < exclusive;
 
-        count = 1;
-        foreach (var _ in source)
+        using var enumerator = source.GetEnumerator();
+        for (var countSeen = 0; countSeen < exclusive; countSeen++)
         {
-            if (count >= exclusive)
-                return false;
-
-            count++;
+            if (!enumerator.MoveNext())
+                return true;
         }
 
-        return true;
+        return false;
     }
 
     public static T Max<T>(this IEnumerable<T> source) where T : INumber<T>
     {
-        var max = source.First();
+        ArgumentNullException.ThrowIfNull(source);
 
-        //Do not Parallel Process
-        foreach (var item in source)
+        using var enumerator = source.GetEnumerator();
+        if (!enumerator.MoveNext())
+            throw new InvalidOperationException("The sequence contains no elements.");
+
+        var max = enumerator.Current;
+        while (enumerator.MoveNext())
         {
-            if (item > max)
-                max = item;
-
+            if (enumerator.Current > max)
+                max = enumerator.Current;
         }
 
         return max;
     }
 
-    public static async Task<T> MaxAsync<T>(this IEnumerable<T> source) where T : INumber<T>
-    {
-        var max = source.First();
-
-        await Task.Run(async () =>
-        {
-            foreach (var item in source)
-            {
-                if (item > max)
-                    max = item;
-
-                await Task.Yield();
-            }
-        }).ConfigureAwait(false);
-
-        return max;
-    }
+    public static Task<T> MaxAsync<T>(this IEnumerable<T> source) where T : INumber<T> =>
+        Task.FromResult(source.Max());
 
     public static T Sum<T>(this IEnumerable<T> source) where T : INumber<T>
     {
+        ArgumentNullException.ThrowIfNull(source);
+
         var sum = T.Zero;
         foreach (var item in source)
             sum += item;
@@ -103,46 +98,19 @@ public static class NumberExtensions
         return sum;
     }
 
-    public static async Task<T> SumAsync<T>(this IEnumerable<T> source) where T : INumber<T>
-    {
-        var sum = T.Zero;
-        await Task.Run(async () =>
-        {
-            foreach (var item in source)
-            {
-                sum += item;
-                await Task.Yield();
-            }
-        }).ConfigureAwait(false);
-
-        return sum;
-    }
+    public static Task<T> SumAsync<T>(this IEnumerable<T> source) where T : INumber<T> =>
+        Task.FromResult(source.Sum());
 
     public static bool TryGetLengthOrCount<TSource>(this IEnumerable<TSource> source, out int? length)
     {
         ArgumentNullException.ThrowIfNull(source);
 
-        try
+        if (source.TryGetNonEnumeratedCount(out var count))
         {
-            if (source is TSource[] array)
-            {
-                length = array.Length;
-                return true;
-            }
-
+            length = count;
+            return true;
         }
-        catch { }
 
-        try
-        {
-            if (source is ICollection<TSource> collection)
-            {
-                length = collection.Count;
-                return true;
-            }
-        }
-        catch { }
-        
         length = null;
         return false;
     }
